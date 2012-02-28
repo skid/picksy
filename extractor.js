@@ -175,10 +175,11 @@ function printTree(tree, options, depth) {
      
    score:  [Number] Repetitiveness of the node's contents. Calculated as:
      
-                    PL * { SUM( (score(Mi) + 1) * count(Mi) * height(Mi) ) + SUM( score(Ni) + 1 ) } / (cM + cN)
+                    ( SUM( (score(Mi) + 1) * C(Mi) * H(Mi) ) + SUM( score(Ni) + 1 ) ) / (cM + cN)
                     
-                    Mi = Group of children with identical patterns (groups)
+                    Mi = Children nodes with identical patterns (groups)
                     cM = Total number of groups of children with identical patterns (gcount)
+                    C  = Number of nodes in a group
                     Ni = Children that have a unique pattern within the node
                     cN = Total number of children with unique patterns (count)
                     H  = Node's pattern length. The pattern length depends on the number of children and

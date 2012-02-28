@@ -1,6 +1,6 @@
 {
   "name": "picksy",
-  "description": "Extracts the relevant text from a html page",
+  "description": "Extracts the relevant text from a html article page",
   "keywords": ["html", "scrape", "extract", "text"],
   "author": "Dusko Jordanovski <jordanovskid@gmail.com>",
   "version": "0.1.0",
