@@ -6,7 +6,7 @@ I developed it to help me scrape articles from the web that will be further used
 
 I wouldn't suggest using it for projects like [Readability](http://www.readability.com/) since it will often show an extra link or gobble up an occasional table of contents. 
 
-You should expect nothing useful from homepages, navigation/category pages, forums and discussion thread web applications.
+You should expect nothing useful from homepages, navigation/category pages, forums and discussion threads and web applications.
 
 Picksy depends on [node-htmlparser](https://github.com/tautologistics/node-htmlparser) to provide its input and works directly on the DOM tree constructed by htmlparser.
 
