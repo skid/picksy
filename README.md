@@ -1,7 +1,12 @@
 # Picksy
 
 Picksy is a scraper that will extract the relevant text from an HTML page like a blog post, a news article or anything that has a considerable chunk of text.
-I developed it to help me scrape articles from the web that will be further used for data mining where absolutely precise extraction is not essential. I wouldn't suggest using it for projects like [Readability](http://www.readability.com/) since it will often show an extra link or gobble up an occasional table of contents.
+
+I developed it to help me scrape articles from the web that will be further used for data mining where absolutely precise extraction is not essential. 
+
+I wouldn't suggest using it for projects like [Readability](http://www.readability.com/) since it will often show an extra link or gobble up an occasional table of contents. 
+
+You should expect nothing useful from homepages, navigation/category pages, forums and discussion thread web applications.
 
 Picksy depends on [node-htmlparser](https://github.com/tautologistics/node-htmlparser) to provide its input and works directly on the DOM tree constructed by htmlparser.
 
