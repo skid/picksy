@@ -247,7 +247,10 @@ function analyze(subtree, parent, root, depth) {
       }
       
       // Qualifies as a title node
-      if( (root.titleWords) && (root.titleWords - node.words <= titleThreshold) && (root.titleWords - node.words >= 0) && (root.titleData.indexOf(data.toLowerCase()) !== -1) ){
+      if( (root.titleWords) && 
+          (root.titleWords - node.words <= titleThreshold) && 
+          (root.titleWords - node.data.split(reg_title).length >= 0) && 
+          (root.titleData.indexOf(data.toLowerCase()) !== -1) ){
         // There is a title element in the head containing the exact words as this node (plus maybe a few more).
         root.heading      = node.data.toLowerCase();
         root.headingNode  = parent;
