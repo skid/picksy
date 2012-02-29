@@ -1,3 +1,11 @@
+// TODO: The tuning settings need explanation on their overall effect
+// TODO: Look at URL 28. Score and tag count need a stronger influence on text node selection
+//       Content node is decided on title only
+//         div  height: 5  words: 602|94  score: 11.835164835164836  tags: 89  longest: 54  title: YES
+//       Otherwise comments node is taken
+//         div  height: 6  words: 843|91  score: 56.3929122574956  tags: 229  longest: 237  title:
+
+
 /**
  * Refinery Extractor.
  * Extracts text content from a DOM tree.
@@ -56,8 +64,6 @@ var legend = { a: "a", h1: "b", h2: "c", h3: "d", h4: "e", h5: "f", h6: "g", ul:
   video: "7", img: "8", object: "9", hgroup: "A", p: "B",  blockquote:"C", i: "G", span: "F", code: "S",
   u: "I", strong: "J", em: "K", q: "L", sub: "M", sup: "N", abbr: "O", address: "D", li: "E", dl: "R",
 }
-
-// TODO: The tuning settings need explanation on their overall effect
 
 var heightThreshold    = 5;  // Stop comparing and producing node patterns for nodes that are heigher than this
 var anchorWeight       = 4;  // Added to the node's score if it is an anchor tag
@@ -324,6 +330,10 @@ function analyze(subtree, parent, root, depth) {
       score += anchorWeight;
       node.aWords += node.words;
     }
+    else if(name === 'h1') {
+      node.title = true;
+    }
+    
     
     if(node.title) {
       parent.title = true;
@@ -400,7 +410,6 @@ function extract(root, options) {
   var to = 'textOnly' in options ? options.textOnly : true;
   
   var candidate = null;
-  debugger;
   (function walk(parent) {
     if(parent.type !== 'tag' || !parent.children || !parent.children.length) {
       return;
