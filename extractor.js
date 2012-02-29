@@ -247,21 +247,11 @@ function analyze(subtree, parent, root, depth) {
       }
       
       // Qualifies as a title node
-      if( (root.titleWords) && (root.titleWords - node.words < titleThreshold) && (root.titleWords - node.words >= 0) && (root.titleData.indexOf(data.toLowerCase()) !== -1) ){
+      if( (root.titleWords) && (root.titleWords - node.words <= titleThreshold) && (root.titleWords - node.words >= 0) && (root.titleData.indexOf(data.toLowerCase()) !== -1) ){
         // There is a title element in the head containing the exact words as this node (plus maybe a few more).
-        if(!root.headingNode || root.heading.length < node.words.length) {
-          // Check if we already have identified a heading node and if this is a better match (more words).
-          if(p = root.headingNode) {
-            // Replace the previous heading
-            do {
-              p.title = false;
-            } while((p = p.parent) && p.title)
-          }
-
-          root.heading      = node.data.toLowerCase();
-          root.headingNode  = parent;
-          parent.title      = true;
-        }
+        root.heading      = node.data.toLowerCase();
+        root.headingNode  = parent;
+        parent.title      = true;
       }
 
       // Merge adjacent text nodes
@@ -330,14 +320,6 @@ function analyze(subtree, parent, root, depth) {
     else if( name === 'a' ) {
       score += anchorWeight;
       node.aWords += node.words;
-    }
-    else if(name === 'h1' && !node.title) {
-      if(!root.headingNode) {
-        root.headingNode = node;
-        root.heading     = getText(node).toLowerCase().trim();
-        parent.title     = true;
-      }
-      ++parent.h1;
     }
     
     if(node.title) {
@@ -493,9 +475,10 @@ function extract(root, options) {
     walk(candidate);
   })(root);
   
-  var orig = candidate;
+  var step = 0;
   if(root.headingNode) {
-    while(!candidate.title) {
+    // Look at most 2 levels up
+    while(step++ <= 2 && !candidate.title) {
       candidate = candidate.parent;
     }
   }
