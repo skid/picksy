@@ -4,9 +4,9 @@ Picksy is a scraper that will extract the relevant text from an HTML page like a
 
 I developed it to help me scrape articles from the web that will be further used for data mining where absolutely precise extraction is not essential. 
 
-I wouldn't suggest using it for projects like [Readability](http://www.readability.com/) since it will often show an extra link or gobble up an occasional table of contents. 
+I wouldn't suggest using it for projects like [Readability](http://www.readability.com/) since it will often show some extra link or gobble up an occasional table of contents. 
 
-You should expect nothing useful from homepages, navigation/category pages, forums, discussion threads and web applications.
+You should expect nothing useful from homepages, navigation/category pages and web applications, although some content will be extracted.
 
 Picksy depends on [node-htmlparser](https://github.com/tautologistics/node-htmlparser) to provide its input and works directly on the DOM tree constructed by htmlparser.
 
@@ -33,25 +33,24 @@ Picksy depends on [node-htmlparser](https://github.com/tautologistics/node-htmlp
       }]
     }];
     
-    // Anayze the dom and add various metrics to the nodes
-    picksy.analyze(dom);
-    // Print a formatted and colored tree of the DOM
-    picksy.printTree(dom);
-    // Get the text node that contains the meat of the text
-    var textNode = picksy.extract(dom);
-    // Get the actual text from the text node. "Formatted" means that block tags are surrounded by newlines.
-    var text = picksy.getFormattedText()
+    // Anayze the dom and extract the text content
+    var result = picksy.analyze(dom);
+    // Print a formatted and colored tree of the DOM with some debug info.
+    picksy.printTree(result.dom);
+    // Get the node that contains the meat of the text
+    result.textNode;
+    // Get the actual text from the text node.
+    result.content;
 
 ## How it works
 
-Picksy employs several heuristics for guessing where the text is. Read the comments in `extract.js` for more info. Here's some of them:
+Picksy employs several heuristics for guessing where the text is. Read the comments in `extractor.js` for more info. Here's a short list.
 
-- A strong emplasis on the location of the title in the DOM.
-- A "repetitiveness" score is calculated for nodes. Nodes that have repeating patterns are unlikely to contain the main text.
 - Word count is taken into account rather than character count.
-- Link density.
-- Longest word sequence (uninterrupted by tags).
-- Height of a node subtree.
+- Moving averages of words in a flattend DOM.
+- Location of the title.
+- Longest word sequence (uninterrupted by tags) vs depth of a node subtree.
+- Number of words in link tags, number of LI tags.
 
 ## License
 
