@@ -592,7 +592,7 @@ function analyze(dom, options){
         node.textNodes += 1;
       }
     }
-    node.avgScore = (total + node.score) / ((node.nodes || 0) + 1);
+    node.avgScore = (total + (node.score || 0)) / ((node.nodes || 0) + 1);
     
     return total;
   })(bodyNode);  
@@ -691,7 +691,9 @@ function analyze(dom, options){
    * If the winner contains relatively few direct children, the content is probably inside one of them.
    * We check this by looking at the directChildren / totalTextNodes ratio.
   **/
+
   var wnode, rnode;
+  printTree(winner)
   while(winner.children.length / winner.textNodes < 0.1){
     wnode = rnode = null;
     winner.children.forEach(function(child){
@@ -714,7 +716,12 @@ function analyze(dom, options){
         }
       });
     }
-    winner = wnode;
+    if(wnode && wnode.words/winner.words > 0.1){
+      winner = wnode;
+    }
+    else {
+      break;
+    }
   }
   
   /**
