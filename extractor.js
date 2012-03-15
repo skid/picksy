@@ -59,9 +59,7 @@
      - We track the series of node scores and look for a sudden drop in the score.
      - The height of the node (how many nodes deep it goes) over the longest word sequence it contains.
      
- */ 
-
-var term = require('./terminal');
+ */
 var util = require('util');
 
 /*
@@ -111,7 +109,10 @@ function getText(node){
  * Removes consecutive blank spaces and does some basic HTML entities decoding.
  */
 function cleanText(text){
-  return text.replace(/&amp;?/g, '&').replace(/&apos;?/g, "'").replace(/&lt;?/g, '<').replace(/&gt;?/g, '>').replace(/&quot;?/g, '"').replace(/&nbsp;?/g, ' ').replace(reg_space, " ");
+  return text.replace(/&amp;?/g, '&').replace(/&apos;?/g, "'")
+             .replace(/&lt;?/g, '<').replace(/&gt;?/g, '>').replace(/&quot;?/g, '"').replace(/&nbsp;?/g, ' ')
+             .replace(/&ldquo;?/g, '“').replace(/&lsquo;?/g, '‘').replace(/&rdquo;?/g, '”').replace(/&rsquo;?/g, '’')
+             .replace(reg_space, " ");
 }
 
 /*
@@ -179,9 +180,10 @@ function getFormattedText(node){
 
 /*
  * Prints a DOM tree and meta information obtained by htmlparser to stdout using colors.
- * This is for development purposes.
+ * This is only for development purposes. Requires node-terminal.
  */
 function printTree(tree, options, depth) {
+  var term = require('./terminal');
   var node, i = 0, 
       indent  = Array(depth || 0).join("|  "), 
       depth   = (depth || 1) + 1, 
@@ -561,6 +563,7 @@ function analyze(dom, options){
     node.score = node.score * (titleFound ? (j-i) / titleFound : 1) / denominator;
     info.scores.push(node.score);
   }
+  
   /**
    * Nodes that directly contain text have meaningful scores.
    * We need to calculate the average score of the nodes that contain other nodes.
@@ -568,21 +571,31 @@ function analyze(dom, options){
    *    sum(Si) / T
    * where:
    *    Si is the score if the i-th descendant node. We count all descendants, not just children.
-   *    T  is the total number of nodes within this node. 
+   *    T  is the total number of nodes within this node.
+   *
+   * While doing all this, we also count the number of text nodes in each node which will be 
+   * used later in the low-level filter.
   **/
   (function score(node){
     var child, i = 0, total = 0;
+    
+    node.textNodes = 0;
     while(child = node.children[i++]){
       if(child.type === 'tag'){
         total += child.score;
         if( util.isArray(child.children) ){
           total += score(child);
         }
+        node.textNodes += (child.textNodes || 0);
+      }
+      else if(child.type === 'text'){
+        node.textNodes += 1;
       }
     }
     node.avgScore = (total + node.score) / ((node.nodes || 0) + 1);
+    
     return total;
-  })(bodyNode);
+  })(bodyNode);  
 
   /**
    * HIGH LEVEL FILTER
@@ -594,7 +607,8 @@ function analyze(dom, options){
    *   - The location of the title
    *   - The product of words with the calculated score
    *   - The longest word sequence compared to the height of the node
-   *
+   *   - The number of LI tags within a node
+   *   _ The number of words inside links within a node
   **/
   var winner;
   (function hfilter(parent){
@@ -641,12 +655,8 @@ function analyze(dom, options){
     if(!candidate || candidate.height < 2 || (parent.containsTitle && !candidate.containsTitle && parent.height < 6)) {
       return;
     }
-
     // There's a runnerup, check if the candidate is decisive enough
     if(runnerup && runnerup.height !== undefined) {
-      // If the runnerup's height is bigger than its longest word sequence, it's ok
-      
-
       // When the height of the candidates is too big, we are more certain in the decisiveness.
       // We decrease the thresholds by multiplying them with hlog.
       var decisive = runnerup.height >= runnerup.longest;
@@ -673,38 +683,13 @@ function analyze(dom, options){
       }
     }
 
-    // The winner has to have children. 
-    // We are never selecting a single text node as the winner.
-    if(candidate.children && candidate.children.length){
-      winner = candidate;      
-    }
     hfilter(candidate);
   })(bodyNode);
-
-  /**
-   * LOW LEVEL FILTER - Filters out the cruft that happens to be in the same node as the main text.
-   * First we calculate:
-   *  - The average score of all nodes in the winner node
-   *  - The number of text-containing nodes 
-  **/
-  (function textnodes(node){
-    node.textNodes = 0;
-    node.children.forEach(function(child){
-      if(child.type === 'text'){
-        node.textNodes += 1;
-      }
-      else if(child.type === 'tag'){
-        util.isArray(child.children) && textnodes(child);
-        node.textNodes += (child.textNodes || 0);
-      }
-    });
-  })(winner);
   
   /**
-   * LOW LEVEL FILTER - If the winner contains relatively few direct children, the content is probably in one of them.
-   * First we calculate:
-   *  - The average score of all nodes in the winner node
-   *  - The number of text-containing nodes 
+   * LOW LEVEL FILTER 
+   * If the winner contains relatively few direct children, the content is probably inside one of them.
+   * We check this by looking at the directChildren / totalTextNodes ratio.
   **/
   var wnode, rnode;
   while(winner.children.length / winner.textNodes < 0.1){
@@ -731,17 +716,20 @@ function analyze(dom, options){
     }
     winner = wnode;
   }
-
+  
+  /**
+   * LOW LEVEL FILTER 2
+   * Sometimes the content node has garbage (like comments, forms and disclaimers)
+   * on the same level as the content. We try to identify and remove those.
+  **/
   var trend = 0, intext = false, ignore = false;
   var avgScore = winner.avgScore, ignorestack = [];
-  
   (function lfilter(node, parent, index){
     var next, ignoreAtThisLevel = false, ix = index;
     
     if(node.height > node.longest){
       node.ignored = true;
     }
-    
     if(node.score > avgScore){
       trend = (trend < 0) ? 0 : trend + 1;
     }
@@ -749,7 +737,6 @@ function analyze(dom, options){
     else if(node.score / avgScore < 0.5) {
       trend = (trend > 0) ? 0 : trend - 1;
     }
-    
     if(!intext && trend > 2){
       intext = true;
     }
@@ -775,11 +762,9 @@ function analyze(dom, options){
     
     util.isArray(node.children) && node.children.forEach(function(child, i){
       var ch, c, ix = index;
-      
       if(child.type !== 'tag'){
         return;
       }
-      
       // Ignore happened in a subnode. Look at the next siblings to see
       if( lfilter(child, node, i) && (ch = parent && parent.children) ){
         while(c = ch[++ix]){
@@ -798,18 +783,18 @@ function analyze(dom, options){
       }
     });
     
-    // It is often tha case that we reach the end of the text (linearly) while still inside a
-    // node that contains links or similar stuff and we end up ignoring only the second part of that node.
+    // Remove nodes that have short word sequences but are very deep. 
+    // These are more often than not social links and navigation menus.
     if(node.height >= node.longest){
       node.ignored = true;
     }
     
     // Ignore nodes that are consisted entirely of linked text, their height is > 1 and they contain multiple words. 
-    // These are most likely menus and tebles of contents.
+    // These are most likely menus and tables of contents.
     if(node.height && node.aWords === node.words && (node.words > node.longest || node.words <= node.nodes) ){
       node.ignored = true;
     }
-    
+
     return ignoreAtThisLevel;
   })(winner);
   

@@ -1,6 +1,5 @@
 /**
  * This code has been taken from node-terminal (https://github.com/mattijs/node-terminal)
- * By 
  */
 var sys = require('util');
     
