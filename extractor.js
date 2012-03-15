@@ -691,9 +691,8 @@ function analyze(dom, options){
    * If the winner contains relatively few direct children, the content is probably inside one of them.
    * We check this by looking at the directChildren / totalTextNodes ratio.
   **/
-
+  // TODO: This loop might not be a good idea. There are some pages whose content is spread out in multiple levels.
   var wnode, rnode;
-  printTree(winner)
   while(winner.children.length / winner.textNodes < 0.1){
     wnode = rnode = null;
     winner.children.forEach(function(child){
@@ -716,6 +715,7 @@ function analyze(dom, options){
         }
       });
     }
+    // If the winning node does not contain at least 1/10 of the words, we're not so sure that it's the real one.
     if(wnode && wnode.words/winner.words > 0.1){
       winner = wnode;
     }
