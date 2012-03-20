@@ -52,6 +52,10 @@ Picksy employs several heuristics for guessing where the text is. Read the comme
 - Longest word sequence (uninterrupted by tags) vs depth of a node subtree.
 - Number of words in link tags, number of LI tags.
 
+## Example
+
+Visit my blog page at [http://discobot.net/en/posts/picksy](http://discobot.net/en/posts/picksy) and you can use the bookmark to extract text from random pages.
+
 ## License
 
 [MIT](http://mit-license.org/)
